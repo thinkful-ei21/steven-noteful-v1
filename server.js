@@ -3,12 +3,14 @@
 const express = require('express');
 // Load array of notes
 const data = require('./db/notes');
+const { requestLogger } = require('./middleware/logger');
 
 const app = express();
 
 const { PORT } = require('./config');
 
 // ADD STATIC SERVER HERE
+app.use(requestLogger);
 app.use(express.static('public'));
 
 
