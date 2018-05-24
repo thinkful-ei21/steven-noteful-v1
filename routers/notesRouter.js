@@ -5,24 +5,57 @@ const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
 
 const data = require('../db/notes');
+const simDB = require('../db/simDB');
+const notes = simDB.initialize(data);
 
 router.get('/', (req, res) => {
 	res.json(data);
 });
 
-const findNote = function(id) {
-	// console.log(`the ID being "found": ${id}, and typeof: ${typeof id}`);
+router.get('/:id', (req, res) => {
+	res.json(notes.find(req.params.id));
+});
+
+// Post (insert) an item
+router.post('/', (req, res, next) => {
+  const { title, content } = req.body;
+
+  const newItem = { title, content };
+  /***** Never trust users - validate input *****/
+  if (!newItem.title) {
+    const err = new Error('Missing `title` in request body');
+    err.status = 400;
+    return next(err);
+  }
+
+  notes.create(newItem, (err, item) => {
+    if (err) {
+      return next(err);
+    }
+    if (item) {
+      res.location(`http://${req.headers.host}/notes/${item.id}`).status(201).json(item);
+    } else {
+      next();
+    }
+  });
+});
+
+const exists = function(id) {
 	for(let i=0; i<data.length; i++) {
-		// console.log(`"data" note ID: ${data[i].id}, and typeof: ${typeof data[i].id}`);
-		if(id == data[i].id) {
-			return data[i];
+		if(data[i] === id) {
+			return true;
 		}
 	}
-	return {error: "ID not found"};
-};
+	return false;
+}
 
-router.get('/:id', (req, res) => {
-	res.json(findNote(req.params.id));
+router.delete('/:id', (req, res) => {
+	notes.delete(req.params.id, (err) => {
+    if(err) {
+      return next(err);
+    }
+    res.sendStatus(204);
+	});
 });
 
 router.get('/boom', (req, res, next) => {
