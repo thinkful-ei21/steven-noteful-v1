@@ -9,11 +9,22 @@ const simDB = require('../db/simDB');
 const notes = simDB.initialize(data);
 
 router.get('/', (req, res) => {
-	res.json(data);
+	res.json(notes.data);
 });
 
-router.get('/:id', (req, res) => {
-	res.json(notes.find(req.params.id));
+router.get('/:id', (req, res, next) => {
+  const theId = req.params.id;
+	notes.find(theId)
+    .then(item => {
+      if(item) {
+        res.json(item);
+      } else {
+        next();
+      }
+    })
+    .catch(err => {
+      next(err);
+    });
 });
 
 // Post (insert) an item
@@ -25,7 +36,7 @@ router.post('/', (req, res, next) => {
   if (!newItem.title) {
     const err = new Error('Missing `title` in request body');
     err.status = 400;
-    return next(err);
+    next(err);
   }
 
   notes.create(newItem, (err, item) => {
