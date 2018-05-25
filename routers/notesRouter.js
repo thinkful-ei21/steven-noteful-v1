@@ -39,35 +39,41 @@ router.post('/', (req, res, next) => {
     next(err);
   }
 
-  notes.create(newItem, (err, item) => {
-    if (err) {
-      return next(err);
-    }
-    if (item) {
-      res.location(`http://${req.headers.host}/notes/${item.id}`).status(201).json(item);
-    } else {
-      next();
-    }
-  });
+  notes.create(newItem)
+    .then(item => {
+      if (item) {
+        res.location(`http://${req.headers.host}/notes/${item.id}`).status(201).json(item);
+      } else {
+        next();
+      }
+    })
+    .catch(err => {
+      next(err);
+    });
 });
 
-const exists = function(id) {
-	for(let i=0; i<data.length; i++) {
-		if(data[i] === id) {
-			return true;
-		}
-	}
-	return false;
-}
+// const exists = function(id) {
+// 	for(let i=0; i<data.length; i++) {
+// 		if(data[i] === id) {
+// 			return true;
+// 		}
+// 	}
+// 	return false;
+// }
 
 router.delete('/:id', (req, res) => {
-	notes.delete(req.params.id, (err) => {
-    if(err) {
-      return next(err);
-    }
-    res.sendStatus(204);
-	});
-});
+	notes.delete(req.params.id)
+    .then(len => {
+      if(len) {
+        res.sendStatus(204);
+      } else {
+        next();
+      }
+    })
+    .catch(err => {
+      next(err);
+    });    
+})
 
 router.get('/boom', (req, res, next) => {
   throw new Error('Boom!!');
